@@ -12,8 +12,10 @@ import type {
   FareSelection,
   Market,
   Passenger,
+  PassengerSeat,
   PaymentMethod,
   SearchCriteria,
+  SeatMapAvailability,
   Station,
 } from "./types";
 
@@ -135,6 +137,38 @@ export function putPrimaryContact(c: ContactInput) {
 }
 
 export const getPassengers = () => bookingCall<Record<string, Passenger>>("/api/nsk/v1/booking/passengers");
+
+// ---------- seats ----------
+
+/** Seat maps for every leg of a journey in the booking (with seat prices per passenger). */
+export const getSeatMaps = (journeyKey: string) =>
+  bookingCall<SeatMapAvailability[]>(`/api/nsk/v3/booking/seatmaps/journey/${encodeURIComponent(journeyKey)}`);
+
+/** Holds the seat for this session and adds its fee. 409 nsk:Seat:UnitNotAvailable when someone else has it. */
+export const assignSeat = (passengerKey: string, unitKey: string) =>
+  bookingCall<null>(`/api/nsk/v2/booking/passengers/${encodeURIComponent(passengerKey)}/seats/${encodeURIComponent(unitKey)}`, {
+    method: "POST",
+    body: {},
+  });
+
+export const removeSeat = (passengerKey: string, unitKey: string) =>
+  bookingCall<null>(`/api/nsk/v1/booking/passengers/${encodeURIComponent(passengerKey)}/seats/${encodeURIComponent(unitKey)}`, {
+    method: "DELETE",
+  });
+
+/** Seats on the booking, keyed by legKey → passengerKey → seat. */
+export function seatsByLeg(booking: Booking): Record<string, Record<string, PassengerSeat>> {
+  const out: Record<string, Record<string, PassengerSeat>> = {};
+  for (const j of booking.journeys)
+    for (const s of j.segments)
+      for (const [pk, ps] of Object.entries(s.passengerSegment ?? {}))
+        for (const seat of ps.seats ?? []) {
+          const leg = s.legs.find((l) => l.designator?.origin === seat.departureStation && l.designator?.destination === seat.arrivalStation);
+          if (!leg) continue;
+          (out[leg.legKey] ??= {})[pk] = seat;
+        }
+  return out;
+}
 
 // ---------- payments ----------
 

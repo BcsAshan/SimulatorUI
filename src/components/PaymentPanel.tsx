@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ApiError } from "@/lib/api";
 import { ErrorAlert, Loading } from "@/components/Feedback";
 import { instant, money } from "@/lib/format";
 import { TEST_CARDS } from "@/lib/network";
@@ -18,12 +20,15 @@ export function PaymentPanel({
   onBookingChange,
   onDone,
   payLabel = "Pay and book",
+  seatsHref,
 }: {
   booking: Booking;
   allowHold: boolean;
   onBookingChange?: (b: Booking) => void;
   onDone: (b: Booking) => void;
   payLabel?: string;
+  /** Where to send the customer when a held seat was lost before commit (409 nsk:Seat:UnitNotAvailable). */
+  seatsHref?: string;
 }) {
   const session = useSession();
   const [methods, setMethods] = useState<Record<string, PaymentMethod> | null>(null);
@@ -209,7 +214,16 @@ export function PaymentPanel({
 
         {error != null && busy === null && (
           <div style={{ marginTop: 16 }}>
-            <ErrorAlert error={error} />
+            <ErrorAlert
+              error={error}
+              action={
+                seatsHref && error instanceof ApiError && error.code === "nsk:Seat:UnitNotAvailable" ? (
+                  <Link className="btn btn-ghost" href={seatsHref}>
+                    Choose seats again
+                  </Link>
+                ) : undefined
+              }
+            />
           </div>
         )}
 

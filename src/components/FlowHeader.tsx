@@ -6,7 +6,7 @@ import { shortDate } from "@/lib/format";
 import { useSession } from "@/lib/session";
 import type { SearchCriteria } from "@/lib/types";
 
-const STEPS = ["Flights", "Travellers", "Payment", "Confirmation"] as const;
+const STEPS = ["Flights", "Travellers", "Seats", "Payment", "Confirmation"] as const;
 export type Step = (typeof STEPS)[number];
 
 export function FlowHeader({ criteria, step, showHoldTimer = false }: { criteria: SearchCriteria | null; step: Step; showHoldTimer?: boolean }) {

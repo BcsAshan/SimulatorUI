@@ -9,9 +9,10 @@ booking and take cash payments.
 | `/` | Search: return or one way, route, dates, adults and children | `resources/stations`, `v2/resources/markets` |
 | `/flights` | Results with a date strip (±3 days), journeys, four fares per flight (Saver, Standard, Flex, Business) | `v4/availability/search`, then `v1/booking/reset` + `v4/trip/sell` |
 | `/book/passengers` | Traveller names, dates of birth, nationality; primary contact | `PUT v3/booking/passengers/{key}`, `PUT v1/booking/contacts/P`, `GET v1/booking` |
+| `/book/seats` | Seat map per flight: pick a seat for each traveller (prices per seat group), change or remove it; optional step | `v3/booking/seatmaps/journey/{key}`, `POST/DELETE v2/booking/passengers/{pk}/seats/{unitKey}` |
 | `/book/payment` | Card form (Visa/MasterCard, cash for agents), "hold and pay later" when allowed | `v2/booking/payments/available`, `v2/booking/hold/available`, `v6/booking/payments`, `POST v3/booking`, `v2/booking/status` |
 | `/book/confirmation` | Booking reference, status, itinerary | – (from the commit result) |
-| `/manage` | Find a booking by reference and last name; pay a booking on hold | `v2/booking/retrieve`, payments, `PUT v3/booking` |
+| `/manage` | Find a booking by reference and last name; pay a booking on hold; change seats (pay the difference, then save) | `v2/booking/retrieve`, payments, `PUT v3/booking` |
 | `/agent` | Agent sign-in, look up by reference (no name check), take payment | `token/user`, `v1/bookings/{rl}`, `v1/booking/retrieve/byRecordLocator/{rl}` |
 
 ## Run it
@@ -56,6 +57,8 @@ Or run it next to the engine containers. Add this service to `../Airline-Simulat
 | Happy path | Search CMB to DXB a few days ahead, pick a fare, fill in names, pay with `4111 1111 1111 1111`, any future expiry, any CVV |
 | Declined card | Pay with `4000 0000 0000 0002`. If the first flight is more than 72 hours away the engine keeps the seats on hold, and the page asks for another card |
 | Hold | Choose "Hold booking and pay later" (only shown when the first flight is at least 72 hours away), then pay it from **My booking** |
+| Seats | Pick seats on the Seats step. Exit rows cost more and are adults only; Flex and Business fares get seats free |
+| Seat clash | Open the same flight in two browser windows (or one normal + one private window). A seat picked in one shows as taken in the other, and clicking it there gets "That seat is no longer available" |
 | Connection | Search CMB to LHR (via DXB) |
 | Agent | **Agent desk**, domain `DEF`, user `agent01`, password `Password1!`. Bookings made while signed in can be paid in cash |
 | Itinerary email | Mailpit at http://localhost:8025 |

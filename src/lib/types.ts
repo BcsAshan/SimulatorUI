@@ -202,9 +202,18 @@ export interface Name {
   suffix?: string | null;
 }
 
+export interface PassengerFee {
+  type: number; // 9 SeatFee
+  code?: string | null;
+  detail?: string | null;
+  flightReference?: string | null;
+  serviceCharges: ServiceCharge[];
+}
+
 export interface Passenger {
   passengerKey: string;
   passengerTypeCode: string;
+  fees?: PassengerFee[];
   name: Name;
   info: {
     nationality?: string | null;
@@ -234,6 +243,16 @@ export interface SegmentFare {
   passengerFares: { passengerType: string; serviceCharges: ServiceCharge[] }[];
 }
 
+export interface PassengerSeat {
+  compartmentDesignator: string;
+  unitDesignator: string;
+  departureStation: string;
+  arrivalStation: string;
+  passengerKey: string;
+  unitKey: string;
+  seatInformation?: { deck: number; seatSet?: string | null; propertyList: string[] } | null;
+}
+
 export interface BookingSegment {
   segmentKey: string;
   identifier: FlightIdentifier;
@@ -243,6 +262,7 @@ export interface BookingSegment {
   international: boolean;
   fares: SegmentFare[];
   legs: Leg[];
+  passengerSegment?: Record<string, { passengerKey: string; seats: PassengerSeat[] }>;
 }
 
 export interface BookingJourney {
@@ -280,6 +300,10 @@ export interface Booking {
     balanceDue: number;
     journeyTotals: { totalAmount: number; totalTax: number; totalDiscount: number };
     journeys: Record<string, { journeyKey: string; totalAmount: number; totalTax: number; totalDiscount: number }>;
+    passengerTotals?: {
+      seats?: { total: number; taxes: number } | null;
+      services?: { total: number; taxes: number } | null;
+    } | null;
   };
   contacts: Record<string, Contact>;
   passengers: Record<string, Passenger>;
@@ -302,6 +326,53 @@ export interface PaymentMethod {
   paymentMethodType: number;
   allowed: boolean;
   paymentMethodFields: Record<string, PaymentMethodField>;
+}
+
+// ---------- seats (Seat service, Phase 2) ----------
+
+/** 1 Reserved (sold), 2 Blocked, 3 held by another session, 4 yours, 5 Open, 9 not for this fare */
+export type SeatAvailability = 0 | 1 | 2 | 3 | 4 | 5 | 9;
+
+export interface SeatMapUnit {
+  unitKey: string;
+  designator: string;
+  compartmentDesignator: string;
+  assignable: boolean;
+  availability: SeatAvailability;
+  group: number;
+  travelClassCode: string;
+  x: number;
+  y: number;
+  properties: { code: string; value: string }[];
+  restrictedPassengerTypes: string[];
+}
+
+export interface SeatMapCompartment {
+  compartmentDesignator: string;
+  sequence: number;
+  availableUnits: number;
+  length: number;
+  width: number;
+  units: SeatMapUnit[];
+}
+
+export interface SeatMapAvailability {
+  journeyKey: string;
+  segmentKey: string;
+  legKey: string;
+  seatMap: {
+    name: string;
+    equipmentType: string;
+    departureStation: string;
+    arrivalStation: string;
+    marketingCode: string;
+    availableUnits: number;
+    fareCompartment: string;
+    decks: Record<string, { number: number; availableUnits: number; compartments: Record<string, SeatMapCompartment> }>;
+  };
+  fees: Record<string, { passengerKey: string; groups: Record<string, { group: number; fees: PassengerFee[] }> }>;
+  propertyLookup: Record<string, string>;
+  groupLookup: Record<string, string>;
 }
 
 // ---------- UI-side search state ----------

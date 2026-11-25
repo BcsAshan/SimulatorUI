@@ -97,6 +97,8 @@ export function SelectionSummary({
 export function BookingSummary({ booking, children }: { booking: Booking; children?: React.ReactNode }) {
   const b = booking.breakdown;
   const tax = b.journeyTotals?.totalTax ?? 0;
+  const seatFees = b.passengerTotals?.seats?.total ?? 0;
+  const fares = (b.journeyTotals?.totalAmount ?? b.totalAmount) - tax;
   const due = amountToPay(booking);
   const paid = Math.max(0, b.totalAmount - due);
   const titles = booking.journeys.length === 2 ? ["Outbound", "Return"] : booking.journeys.map((_, i) => `Flight ${i + 1}`);
@@ -111,12 +113,18 @@ export function BookingSummary({ booking, children }: { booking: Booking; childr
         <dl className="money-rows">
           <div>
             <dt>Fares for {pax} {pax === 1 ? "traveller" : "travellers"}</dt>
-            <dd>{money(b.totalAmount - tax, booking.currencyCode, true)}</dd>
+            <dd>{money(fares, booking.currencyCode, true)}</dd>
           </div>
           <div>
             <dt>Taxes and fees</dt>
             <dd>{money(tax, booking.currencyCode, true)}</dd>
           </div>
+          {seatFees > 0 && (
+            <div>
+              <dt>Seats</dt>
+              <dd>{money(seatFees, booking.currencyCode, true)}</dd>
+            </div>
+          )}
           {paid > 0 && (
             <div>
               <dt>Paid</dt>

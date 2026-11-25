@@ -142,7 +142,7 @@ function PassengersForm({ booking, saved }: { booking: Booking; saved: DetailsFo
       await putPrimaryContact(form.contact);
       const fresh = await getBooking();
       patchFlow({ booking: fresh, details: form as unknown as Record<string, unknown> });
-      router.push("/book/payment");
+      router.push("/book/seats");
     } catch (err) {
       setApiError(err);
       setBusy(false);
@@ -257,7 +257,7 @@ function PassengersForm({ booking, saved }: { booking: Booking; saved: DetailsFo
                 Back to flights
               </Link>
               <button type="submit" className="btn btn-primary btn-lg" disabled={busy}>
-                {busy ? "Saving…" : "Continue to payment"}
+                {busy ? "Saving…" : "Continue to seats"}
               </button>
             </div>
           </div>

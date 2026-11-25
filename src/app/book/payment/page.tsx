@@ -8,6 +8,7 @@ import { PaymentPanel } from "@/components/PaymentPanel";
 import { BookingSummary } from "@/components/Summary";
 import { patchFlow, useFlow } from "@/lib/flow";
 import { genderLabel } from "@/lib/format";
+import { seatList } from "@/components/Itinerary";
 import { currentSession, endSession } from "@/lib/session";
 import { useHydrated } from "@/lib/store";
 import type { Booking } from "@/lib/types";
@@ -44,7 +45,10 @@ export default function PaymentPage() {
             <section className="panel" aria-labelledby="who-h" style={{ marginBottom: 16 }}>
               <div className="panel-head">
                 <h3 id="who-h">Travellers</h3>
-                <Link href="/book/passengers">Edit details</Link>
+                <span style={{ display: "flex", gap: 16 }}>
+                  <Link href="/book/passengers">Edit details</Link>
+                  <Link href="/book/seats">Change seats</Link>
+                </span>
               </div>
               <table className="data-table">
                 <tbody>
@@ -55,12 +59,13 @@ export default function PaymentPage() {
                       </td>
                       <td>{p.passengerTypeCode === "CHD" ? "Child" : "Adult"}</td>
                       <td>{genderLabel(p.info.gender)}</td>
+                      <td>{seatList(booking, p.passengerKey) || "No seats"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </section>
-            <PaymentPanel booking={booking} allowHold onBookingChange={(b) => patchFlow({ booking: b })} onDone={done} />
+            <PaymentPanel booking={booking} allowHold seatsHref="/book/seats" onBookingChange={(b) => patchFlow({ booking: b })} onDone={done} />
           </div>
           <BookingSummary booking={booking} />
         </div>

@@ -2,12 +2,26 @@
 
 import { bookingStatusLabel, dayDiff, genderLabel, instant, localTime, longDate, money, paxTypeLabel, paymentStatusLabel } from "@/lib/format";
 import { cityName } from "@/lib/network";
+import { seatsByLeg } from "@/lib/pss";
 import type { Booking } from "@/lib/types";
 import { flightNumbers, journeyDuration, productLabel } from "./Summary";
 
 export function StatusPill({ status }: { status: number }) {
   const s = bookingStatusLabel(status);
   return <span className={`status-pill status-${s.tone}`}>{s.label}</span>;
+}
+
+/** "12A (CMB–DXB), 14C (DXB–LHR)" — a passenger's seats on the booking. */
+export function seatList(booking: Booking, passengerKey: string): string {
+  const legs = booking.journeys.flatMap((j) => j.segments.flatMap((s) => s.legs));
+  const byLeg = seatsByLeg(booking);
+  return legs
+    .map((l) => {
+      const seat = byLeg[l.legKey]?.[passengerKey];
+      return seat ? (legs.length > 1 ? `${seat.unitDesignator} (${seat.departureStation} to ${seat.arrivalStation})` : seat.unitDesignator) : null;
+    })
+    .filter(Boolean)
+    .join(", ");
 }
 
 /** Full read-only view of a stored booking: reference, flights, travellers, contact and payments. */
@@ -89,6 +103,7 @@ export function Itinerary({ booking, actions }: { booking: Booking; actions?: Re
               <th scope="col">Type</th>
               <th scope="col">Gender</th>
               <th scope="col">Date of birth</th>
+              <th scope="col">Seats</th>
             </tr>
           </thead>
           <tbody>
@@ -98,6 +113,7 @@ export function Itinerary({ booking, actions }: { booking: Booking; actions?: Re
                 <td>{paxTypeLabel(p.passengerTypeCode)}</td>
                 <td>{genderLabel(p.info.gender) || "–"}</td>
                 <td className="num">{p.info.dateOfBirth?.slice(0, 10) ?? "–"}</td>
+                <td>{seatList(booking, p.passengerKey) || "–"}</td>
               </tr>
             ))}
           </tbody>

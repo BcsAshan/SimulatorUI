@@ -145,6 +145,10 @@ const FRIENDLY: Record<string, string> = {
   "nsk:Booking:ModifiedByAnotherSession": "Someone else changed this booking. Retrieve it again and redo your change.",
   "nsk-server:InvalidDateRange": "Pick a date range of 14 days or less.",
   "nsk:Booking:InvalidStationCode": "Pick two different airports.",
+  "nsk:Seat:UnitNotAvailable": "That seat is no longer available because someone else has it. Pick another seat.",
+  "nsk:Seat:CabinMismatch": "That seat is in a different cabin from your fare.",
+  "nsk:Seat:PassengerRestricted": "Children can't sit in an emergency exit row. Pick another seat for this traveller.",
+  "nsk:Seat:UnitNotAssignable": "That seat can't be booked.",
 };
 
 export function friendlyError(e: unknown): { title: string; detail: string; code?: string } {

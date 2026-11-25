@@ -11,6 +11,7 @@ calls the API — the engine contract is the source of truth; `src/lib/types.ts`
 | Customer flow: search → fares → travellers → pay / hold → confirmation | ✅ written |
 | Manage booking (reference + last name, pay held balance with PUT commit) | ✅ written |
 | Agent desk (login, stateless lookup, load into state, cash/card payment) | ✅ written |
+| Seat selection (`/book/seats` step + "Change seats" in My booking), needs the engine's Seat service | ✅ written 2026-11-25, reviewed; not run yet |
 | `npm install` / `next build` | ⬜ **not run yet** — the authoring sandbox had no npm registry. Code was type-checked with hand-written stubs for react/next (no errors) and reviewed by an independent agent against the C# handlers; 4 defects found and fixed (see below) |
 | End-to-end run against the Docker engine | ⬜ pending |
 
@@ -22,6 +23,18 @@ calls the API — the engine contract is the source of truth; `src/lib/types.ts`
 | A failed commit leaves the card payment on the draft as Received (1); the engine counts it as paid, so `balanceDue` became 0 and the pay button was disabled | `amountToPay()` = `balanceDue` + payments with status 0/1; `payAndCommit` deletes those before paying or holding |
 | `bookingCall` went through `ensureSession`, whose idle threshold is 15 s shorter → could silently start a new empty session | `bookingCall` uses the existing session's token directly (`callWith`) |
 | Charge type 19 (FareSurcharge) is tax in `BookingCalculator` | `offers.ts` `isFare` = types 0, 1, 7 only |
+
+### Seat selection notes
+
+- `components/SeatPicker.tsx` draws each leg's map from the engine's `x`/`y`/`width` (one CSS grid per compartment;
+  aisle columns are x values without seats). Seats on the booking come from
+  `journeys[].segments[].passengerSegment[pk].seats[]` via `seatsByLeg()` in `lib/pss.ts`.
+- Seat states: open (by fee group), mine, `previous` (availability 4 with no owner = the saved seat after picking a
+  new one in My booking), `lost` (on the booking but availability ≠ 4 = the hold ended), taken, restricted, blocked.
+- After every assign/remove the picker reloads the booking and that journey's maps. A 409 `nsk:Seat:UnitNotAvailable`
+  also reloads. The effect that loads all maps is keyed on the journey-key string, not the booking object.
+- My booking: a seat change that costs more → PaymentPanel (PUT commit); costs nothing → "Save seat changes" (PUT);
+  costs less → blocked with a message (the engine has no refunds yet).
 
 ## Conventions
 
@@ -48,6 +61,7 @@ calls the API — the engine contract is the source of truth; `src/lib/types.ts`
 
 ## Next steps (suggested order)
 
+0. Rebuild the engine (`docker compose up --build`) so the Seat service is running before trying the Seats step.
 1. `npm install && npm run build` on the dev machine; fix anything the real React/Next types flag. Then run the
    "Try it" table in README.md against `docker compose up` and record results here.
 2. Add Playwright smoke test for the happy path (search → pay 4111… → confirmation shows a 6-character reference).
